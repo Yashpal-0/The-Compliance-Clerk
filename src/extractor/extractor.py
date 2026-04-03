@@ -2,7 +2,7 @@ import pdfplumber
 from pdf2image import convert_from_path
 import pytesseract
 from pathlib import Path
-
+import shutil
 def extract_text_pdfplumber(pdf_path: str) -> str:
     with pdfplumber.open(pdf_path) as pdf:
         pages = [p.extract_text() or "" for p in pdf.pages]
@@ -12,6 +12,10 @@ def extract_text_ocr(pdf_path: str, lang: str = "eng+guj") -> str:
     """Fallback: rasterize pages and run Tesseract OCR.
     lang='eng+guj' handle the bilinngual Gujarati+English docs.
     """
+    if shutil.which("tesseract") is None:
+        raise RuntimeError("Tesseract OCR is not installed. Please install it to use OCR features.")
+        
+
     images = convert_from_path(pdf_path, dpi=200)
     pages = []
     for image in images:

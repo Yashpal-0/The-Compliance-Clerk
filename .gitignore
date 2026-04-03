@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Cache directories
+.cache/
+.pytest_cache/
+
+# IDE/Editor folders
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Preview/Temporary files
+.tmp_preview/
+output.xlsx
+
+# MacOS
+.DS_Store
