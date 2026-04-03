@@ -1,0 +1,17 @@
+# Core LLM / Agent
+anthropic>=0.40.0
+
+# PDF Parsing
+pdfplumber==0.11.9
+pdf2image==1.17.0
+
+# OCR (requires tesseract binary: brew install tesseract tesseract-lang)
+pytesseract==0.3.13
+Pillow==12.1.1
+
+# Excel output
+openpyxl==3.1.5
+
+# CLI + dev experience
+rich>=13.7.0
+python-dotenv==1.2.2
