@@ -5,7 +5,7 @@ Allows full replay and debugging of extraction decisions.
 
 import sqlite3
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 DB_PATH = "audit.db"
@@ -27,7 +27,7 @@ def init_db():
         """)
         conn.execute("""
         CREATE TABLE IF NOT EXISTS run_summary (
-        id INTERGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         run_timestamp TEXT,
         total_files INTEGER,
         successful INTEGER,
@@ -47,14 +47,14 @@ def log_extraction(
     error_message: str = None
 ):
     with sqlite3.connect(DB_PATH) as conn:
-        conn.excute(
+        conn.execute(
             """
             INSERT INTO extraction_logs 
             (
             timestamp, source_file, extraction_method, doc_types_detected, tool_called, tool_input, raw_response, status, error_message)
             VALUES (?,?,?,?,?,?,?,?,?)            
             """, (
-                datetime.utcnow().isoformat(),
+                datetime.now(timezone.utc).isoformat(),
                 source_file,
                 extraction_method,
                 json.dumps(doc_types),
