@@ -3,6 +3,8 @@ from pdf2image import convert_from_path
 import pytesseract
 from pathlib import Path
 import shutil
+from rich.progress import Progress
+
 def extract_text_pdfplumber(pdf_path: str) -> str:
     with pdfplumber.open(pdf_path) as pdf:
         pages = [p.extract_text() or "" for p in pdf.pages]
@@ -18,9 +20,17 @@ def extract_text_ocr(pdf_path: str, lang: str = "eng+guj") -> str:
 
     images = convert_from_path(pdf_path, dpi=200)
     pages = []
-    for image in images:
-        text = pytesseract.image_to_string(image, lang=lang)
-        pages.append(text)
+
+    with Progress() as progress:
+    
+        task = progress.add_task(f"[cyan]Running OCR on {pdf_path}...", total=len(images))
+    
+        for image in images:
+            text = pytesseract.image_to_string(image, lang=lang)
+            pages.append(text)
+
+            progress.advance(task)
+    
     return "\n\n".join(pages).strip()
 
 def extract_text(pdf_path:str)->tuple[str,str]:
