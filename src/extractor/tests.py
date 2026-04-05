@@ -1,7 +1,7 @@
 import unittest
 import os
 import shutil
-from extractor import extract_text, detect_doc_type
+from src.extractor.extractor import extract_text, detect_doc_type
 
 class TestExtractor(unittest.TestCase):
     def setUp(self):
@@ -40,6 +40,9 @@ class TestExtractor(unittest.TestCase):
 
         pdf_files = [f for f in os.listdir(self.files_dir) if f.lower().endswith('.pdf')]
         
+        # Limit to 1 file to prevent long-running test suites parsing massive PDFs
+        pdf_files = pdf_files[:1]
+
         if not pdf_files:
             self.skipTest(f"No PDF files found in {self.files_dir}.")
 

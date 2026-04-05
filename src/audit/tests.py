@@ -2,8 +2,8 @@ import unittest
 import sqlite3
 import os
 import json
-from audit import init_db, log_extraction, log_run_summary
-import audit
+from src.audit.audit import init_db, log_extraction, log_run_summary
+import src.audit.audit as audit
 
 class TestAuditLog(unittest.TestCase):
     def setUp(self):
