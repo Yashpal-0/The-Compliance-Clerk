@@ -23,7 +23,6 @@ env/
 
 # Preview/Temporary files
 .tmp_preview/
-output.xlsx
 
 # MacOS
 .DS_Store

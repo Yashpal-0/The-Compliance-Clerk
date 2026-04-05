@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import openpyxl
 
-from src.reporter.reporter import write_excel, write_failed_log, HEADERS
+from src.reporter.reporter import write_excel, write_failed_log
 
 class TestReporter(unittest.TestCase):
 

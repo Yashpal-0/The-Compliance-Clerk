@@ -11,13 +11,21 @@ Key differences from Anthropic:
 """
 
 import json
-from groq import Groq
+import os
+import openai
+import time
 from dotenv import load_dotenv
 from src.tools.tools import TOOLS, EXTRACTION_TOOLS
 from src.audit.audit import log_extraction
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
 load_dotenv()
-client = Groq()
+
+# We can reuse the OpenAI SDK to perfectly interface with OpenRouter
+client = openai.OpenAI(
+    api_key=os.environ.get("OPENROUTER_API_KEY"),
+    base_url="https://openrouter.ai/api/v1"
+)
 
 SYSTEM_PROMPT = """You are a document extraction specialist for Indian government 
 and legal documents, particularly from Gujarat.
@@ -28,39 +36,36 @@ You can read and extract from both languages.
 Your workflow:
 1. ALWAYS call classify_document first to identify what's in the PDF.
 2. Then call the appropriate extraction tool(s) for each document type found.
-   - If a PDF contains both e-Challans AND a Lease Deed, call extraction tools for EACH.
-   - For multiple e-Challans (e.g., Registration Fee + Stamp Duty), call extract_echallan_fields ONCE PER CHALLAN.
+   - If a PDF contains multiple NA PDFs, eChallans, or Lease Deeds, call extraction tools for EACH.
 3. If a field is genuinely absent, omit it — never fabricate values.
 4. If the document is unreadable, call flag_extraction_failure.
 
 Key patterns to recognize:
-- NA Orders: Start with "iORA/" order numbers, issued by Prant Kacheri
-- e-Challans: Issued by Inspector General of Registration, have Transaction No.
-- Lease Deeds: Have DNR number box (top right), "LEASE DEED / લીઝનોકરાર" heading
+- NA PDF: Start with "iORA/" order numbers, Survey Number, Land Area, Owner Name.
+- eChallans (Traffic/Violation): Details like Challan Number, Vehicle Number, Offence Description. 
+  NOTE: ONLY extract Traffic Violation eChallans using extract_echallan_fields. DO NOT use extract_echallan_fields for Stamp Duty or Registration Fee receipts.
+- Lease Deed: Look for Lease Deeds, Registration Fees, and Stamp Duty.
 - Gujarati: ચો.મી. = sq.mt., તા. = date, જિ. = district, તા. = taluka/date (context-dependent)
 """
 
+@retry(wait=wait_exponential(multiplier=1, min=15, max=60), stop=stop_after_attempt(5), retry=retry_if_exception_type(openai.RateLimitError), reraise=True)
 def run_agent(pdf_path: str, doc_text: str, hint_types: list) -> tuple[list,list]:
     """
     Agent loop that extracts ALL records from a PDF.
     A single PDF can produce multiple records of different types.
-    
-    Returns: (list_of_records, list_of_doc_types_found)
     """
 
-    user_message = f"""Extract ALL documents from this PDF file. 
+    user_message = f"""Extract ALL documents from this PDF file.
 
 File: {pdf_path}
 Pre-detected hints: {hint_types}
 
 IMPORTANT: This PDF may contain MULTIPLE documents. For example:
-- Multiple e-Challans (one for Registration Fee, one for Stamp Duty)
-- Plus a Lease Deed
-- Plus other supporting docs
+- Traffic eChallans, NA orders, or Lease Deeds
 
-Call extract_echallan_fields ONCE PER CHALLAN found.
-Call extract_lease_deed_fields if a lease deed is present.
-Call extract_na_order_fields if an NA order is present.
+Call extract_echallan_fields for EACH Traffic challan found (Strictly ignore property stamp duty receipts).
+Call extract_na_order_fields for each NA order present.
+Call extract_lease_deed_fields for Lease Deeds.
 
 Document text (with page breaks marked):
 ---
@@ -73,11 +78,8 @@ Document text (with page breaks marked):
                 f"Extract ALL documents from this PDF file.\n\n"
                 f"File: {pdf_path}\n"
                 f"Pre-detected hints: {hint_types}\n\n"
-                f"IMPORTANT: This PDF may contain MULTIPLE documents. For example:\n"
-                f"- Multiple e-Challans (Registration Fee + Stamp Duty)\n"
-                f"- Plus a Lease Deed\n"
-                f"- Plus other supporting docs\n\n"
-                f"Call extract_echallan_fields ONCE PER CHALLAN found.\n\n"
+                f"IMPORTANT: This PDF may contain MULTIPLE documents.\n"
+                f"Call extract_echallan_fields OR extract_na_order_fields OR extract_lease_deed_fields as needed.\n\n"
                 f"Document text:\n---\n{doc_text}\n---"
             )
         }
@@ -89,15 +91,14 @@ Document text (with page breaks marked):
 
     for iteration in range(max_iteration):
 
-        tool_choice = "required" if iteration == 0 else "auto"
+        tool_choice = "auto"
 
         response = client.chat.completions.create(
-            model="openai/gpt-oss-120b", # Using one of Groq's high-capacity capable models
+            model="qwen/qwen3.6-plus:free", # OpenRouter model requested
             messages=messages,
             tools=TOOLS,
             tool_choice=tool_choice,
             temperature=0, # deterministic extraction
-            max_tokens=4096
         )
 
         message=response.choices[0].message
@@ -230,6 +231,5 @@ def _all_types_extracted(classifications: list, records: list)-> bool:
             return False
 
     return True 
-
 
 

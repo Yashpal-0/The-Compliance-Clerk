@@ -68,15 +68,9 @@ def main():
         else:
             all_records.extend(records)
     
-    # Link NA Orders to Lease Deeds
-    console.print(f"\n[bold]🔗 Linking records...[/]")
-    merged_rows = link_records(all_records)
-    console.print(f"   Produced [green]{len(merged_rows)}[/] output row(s)")
-    
-    # Write Excel
-    from datetime import datetime
-    output_file = output_dir / f"compliance_output_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-    write_excel(merged_rows, str(output_file))
+    # Write Excel directly from extracted records (no linking needed since separated by sheets)
+    output_file = output_dir / "output.xlsx"
+    write_excel(all_records, str(output_file))
     write_failed_log(failed, str(output_dir))
     
     # Log run summary

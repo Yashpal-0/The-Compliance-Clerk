@@ -46,31 +46,22 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "order_number": {
+                    "survey_number": {"type": "string"},
+                    "land_area": {
                         "type": "string",
-                        "description": "e.g. iORA/31/02/112/7/2026"
+                        "description": "Land area mentioned in the order (e.g., in sq.mt. or acres)"
                     },
-                    "application_number": {"type": "string"},
+                    "owner_name": {"type": "string"},
                     "order_date": {
                         "type": "string",
                         "description": "Date in DD/MM/YYYY format"
                     },
-                    "survey_number": {"type": "string"},
-                    "village": {"type": "string"},
-                    "taluka": {"type": "string"},
-                    "district": {"type": "string"},
-                    "land_area_sqm": {
-                        "type": "number",
-                        "description": "Land area in square meters"
-                    },
-                    "lease_duration": {"type": "string"},
-                    "purpose": {"type": "string"},
-                    "lessee_name": {"type": "string"},
-                    "authority_name": {"type": "string"},
-                    "authority_designation": {"type": "string"}
+                    "authority_details": {
+                        "type": "string",
+                        "description": "Name and designation of authority issuing the order"
+                    }
                 },
-                "required": ["order_number", "order_date", "survey_number",
-                             "village", "land_area_sqm"]
+                "required": ["survey_number", "land_area", "owner_name", "order_date", "authority_details"]
             }
         }
     },
@@ -79,28 +70,21 @@ TOOLS = [
         "function": {
             "name": "extract_echallan_fields",
             "description": (
-                "Extract fields from an e-Challan issued by Inspector General of "
-                "Registration, Revenue Department, Government of Gujarat. "
-                "Call this ONCE PER CHALLAN — a PDF may have multiple challans."
+                "Extract fields ONLY from an eChallan for TRAFFIC VIOLATIONS ONLY. "
+                "DO NOT call this tool for Stamp Duty or Registration Fee receipts. "
+                "Look for Vehicle Number and Violation details."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "application_number": {"type": "string"},
-                    "transaction_number": {"type": "string"},
-                    "account_head": {
-                        "type": "string",
-                        "description": "e.g. Registration Fee or Stamp Duty"
-                    },
-                    "amount": {"type": "number"},
-                    "date": {"type": "string"},
-                    "bank_branch": {"type": "string"},
-                    "payee_name": {"type": "string"},
-                    "office_name": {"type": "string"},
-                    "property_survey_no": {"type": "string"},
-                    "land_area_sqm": {"type": "number"}
+                    "challan_number": {"type": "string"},
+                    "vehicle_number": {"type": "string"},
+                    "violation_date": {"type": "string"},
+                    "amount": {"type": "string"},
+                    "offence_description": {"type": "string"},
+                    "payment_status": {"type": "string"}
                 },
-                "required": ["transaction_number", "account_head", "amount", "date"]
+                "required": ["challan_number", "vehicle_number", "violation_date", "amount", "offence_description", "payment_status"]
             }
         }
     },
@@ -126,15 +110,15 @@ TOOLS = [
                     "village": {"type": "string"},
                     "taluka": {"type": "string"},
                     "district": {"type": "string"},
-                    "land_area_sqm": {"type": "number"},
-                    "land_area_acres": {"type": "number"},
+                    "land_area_sqm": {"type": "string"},
+                    "land_area_acres": {"type": "string"},
                     "lessor_name": {"type": "string"},
                     "lessee_name": {"type": "string"},
                     "lessee_cin": {"type": "string"},
                     "lease_term": {"type": "string"},
-                    "consideration_price": {"type": "number"},
-                    "stamp_duty": {"type": "number"},
-                    "registration_fee": {"type": "number"},
+                    "consideration_price": {"type": "string"},
+                    "stamp_duty": {"type": "string"},
+                    "registration_fee": {"type": "string"},
                     "sub_registrar_office": {"type": "string"}
                 },
                 "required": ["dnr_number", "registration_date", "survey_number_new",
