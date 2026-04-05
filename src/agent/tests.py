@@ -87,11 +87,14 @@ class TestAgent(unittest.TestCase):
         """Integration test that actually hits the OpenAI API"""
         print("\nRunning actual API integration test...")
         doc_text = """
-        Office of the Inspector General of Registration
+        Traffic Police Gujarat
         e-Challan
-        Transaction No: TXNGJ987654321
-        Account Head: 0030 Stamp Duty
-        Amount: 5000
+        Challan No: CHGJ987654321
+        Vehicle No: GJ-01-AB-1234
+        Violation Date: 12-05-2023
+        Offence: Over speeding
+        Amount: 500
+        Payment Status: Unpaid
         """
         records, classifications = run_agent("integration_test.pdf", doc_text, ["echallan"])
         
