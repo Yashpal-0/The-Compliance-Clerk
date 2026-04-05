@@ -11,11 +11,13 @@ Key differences from Anthropic:
 """
 
 import json
-import openai
+from groq import Groq
+from dotenv import load_dotenv
 from src.tools.tools import TOOLS, EXTRACTION_TOOLS
 from src.audit.audit import log_extraction
 
-client = openai.OPENAI()
+load_dotenv()
+client = Groq()
 
 SYSTEM_PROMPT = """You are a document extraction specialist for Indian government 
 and legal documents, particularly from Gujarat.
@@ -90,7 +92,7 @@ Document text (with page breaks marked):
         tool_choice = "required" if iteration == 0 else "auto"
 
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="openai/gpt-oss-120b", # Using one of Groq's high-capacity capable models
             messages=messages,
             tools=TOOLS,
             tool_choice=tool_choice,
@@ -103,7 +105,11 @@ Document text (with page breaks marked):
         messages.append(message)
 
         if not message.tool_calls:
-            break
+            if _all_types_extracted(classification, extracted_records):
+                break
+            else:
+                messages.append({"role": "user", "content": "You must call the appropriate extraction tools to complete the task."})
+                continue
 
         tool_result_messages = []
 
@@ -176,7 +182,7 @@ Document text (with page breaks marked):
                 log_extraction(
                     source_file=pdf_path,
                     extraction_method="openai-agent",
-                    doc_types=classifications,
+                    doc_types=classification,
                     tool_called=tool_name,
                     tool_input=tool_input,
                     raw_response={},
@@ -195,18 +201,15 @@ Document text (with page breaks marked):
                 "content": result_content
             })
 
-        messages.append(tool_result_messages)
+        messages.extend(tool_result_messages)
 
         if _all_types_extracted(classification, extracted_records):
-            break
-
-        if response.choices[0].finish_reason == "stop":
             break
 
     return extracted_records, classification
 
 
-def _all_type_extracted(classifications: list, records: list)-> bool:
+def _all_types_extracted(classifications: list, records: list)-> bool:
     """Check if agent has extracted atleast one record for each classified type."""
 
     if not classifications or "unknown" in classifications:

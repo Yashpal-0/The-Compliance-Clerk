@@ -1,5 +1,6 @@
 # Core LLM / Agent
-anthropic>=0.40.0
+groq
+openai>=1.30.0
 
 # PDF Parsing
 pdfplumber==0.11.9

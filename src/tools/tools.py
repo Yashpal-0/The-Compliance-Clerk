@@ -1,18 +1,15 @@
-"""
-Tool schemas for the OpenAI agent.
-OpenAI format: each tool has type="function" + a "function" dict.
-"""
+# src/tools.py
 
 TOOLS = [
     {
-        "type": "function",
+        "type": "function",                      # OpenAI requires this wrapper
         "function": {
             "name": "classify_document",
             "description": (
                 "ALWAYS call this first. Identify which document types are present "
                 "in the provided text. A single PDF may contain multiple document types."
             ),
-            "parameters": {
+            "parameters": {                      # 'parameters' not 'input_schema'
                 "type": "object",
                 "properties": {
                     "doc_types_found": {
@@ -56,7 +53,7 @@ TOOLS = [
                     "application_number": {"type": "string"},
                     "order_date": {
                         "type": "string",
-                        "description": "DD/MM/YYYY format"
+                        "description": "Date in DD/MM/YYYY format"
                     },
                     "survey_number": {"type": "string"},
                     "village": {"type": "string"},
@@ -84,7 +81,7 @@ TOOLS = [
             "description": (
                 "Extract fields from an e-Challan issued by Inspector General of "
                 "Registration, Revenue Department, Government of Gujarat. "
-                "Call this tool ONCE PER CHALLAN found."
+                "Call this ONCE PER CHALLAN — a PDF may have multiple challans."
             ),
             "parameters": {
                 "type": "object",
@@ -112,16 +109,16 @@ TOOLS = [
         "function": {
             "name": "extract_lease_deed_fields",
             "description": (
-                "Extract fields from a registered Lease Deed document. "
+                "Extract fields from a registered Lease Deed. "
                 "Look for DNR number, lessor/lessee names, land area, "
-                "lease term, registration date, and financial details."
+                "lease term, registration date."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "dnr_number": {
                         "type": "string",
-                        "description": "Document Number from DNR box e.g. 838/2025"
+                        "description": "e.g. 838/2025"
                     },
                     "registration_date": {"type": "string"},
                     "survey_number_new": {"type": "string"},
@@ -150,8 +147,8 @@ TOOLS = [
         "function": {
             "name": "flag_extraction_failure",
             "description": (
-                "Call this if the document is unreadable or required fields "
-                "cannot be found. Do NOT guess — flag instead."
+                "Call if the document is unreadable or fields cannot be found. "
+                "Never fabricate — flag instead."
             ),
             "parameters": {
                 "type": "object",
@@ -165,7 +162,7 @@ TOOLS = [
     }
 ]
 
-# Tool names that produce extractable records
+# Tool names that produce extractable records (no wrapper needed here)
 EXTRACTION_TOOLS = {
     "extract_na_order_fields",
     "extract_echallan_fields",

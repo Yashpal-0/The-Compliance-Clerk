@@ -78,3 +78,6 @@ def log_run_summary(total: int, successful: int, failed: int, output_file: str):
             total, successful, failed, output_file
         ))
         conn.commit()
+
+# Ensure DB is initialized when module is imported
+init_db()
