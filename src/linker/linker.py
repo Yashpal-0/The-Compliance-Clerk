@@ -32,8 +32,11 @@ def _find_matching_deed(na_record: dict, lease_deeds: list[dict])-> dict | None:
     for deed in lease_deeds:
         survey_new = normalize(deed.get("survey_no_new", ""))
         survey_old = normalize(deed.get("survey_no_old", ""))
-        if na_survey and (na_survey in survey_new or na_survey in survey_old or survey_new in na_survey):
-            return deed
+        if na_survey:
+            match_new = survey_new and (na_survey in survey_new or survey_new in na_survey)
+            match_old = survey_old and (na_survey in survey_old or survey_old in na_survey)
+            if match_new or match_old:
+                return deed
 
     # Priority 2: same PDF file
     for deed in lease_deeds:

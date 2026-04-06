@@ -42,13 +42,13 @@ class TestReporter(unittest.TestCase):
             {
                 "doc_type": "na_order",
                 "village": "TestVillage",
-                "survey_number": "123",
-                "land_area_sqm": "1000",
+                "survey_no": "123",
+                "area_in_na_order": "1000",
                 "source_file": "doc1.pdf"
             },
             {
                 "doc_type": "lease_deed",
-                "dnr_number": "DNR999",
+                "lease_deed_doc_no": "DNR999",
                 "stamp_duty": "10000",
                 "source_file": "doc2.pdf"
             }
