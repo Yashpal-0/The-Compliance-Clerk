@@ -19,38 +19,30 @@ def _find_matching_deed(na_record: dict, lease_deeds: list[dict])-> dict | None:
     """
     Find the lease deed that matches a given NA order.
     Matching logic (in order of priority):
-    1. Same source file (bundled PDF)
-    2. Same village + survey number
-    3. Same village only (fuzzy)
+    1. Same survey number (Foreign Key)
+    2. Same source file (bundled PDF)
+    3. Same village (fuzzy)
     """
     
     na_village = na_record.get("village", "")
-    na_survey = normalize(na_record.get("survey_number", ""))
+    na_survey = normalize(na_record.get("survey_no", ""))
     na_file = na_record.get("source_file", "")
 
-    # Priority 1: same PDF file
+    # Priority 1: Survey Number match (Foreign Key)
     for deed in lease_deeds:
-        if deed.get("source_file") == na_file:
+        survey_new = normalize(deed.get("survey_no_new", ""))
+        survey_old = normalize(deed.get("survey_no_old", ""))
+        if na_survey and (na_survey in survey_new or na_survey in survey_old or survey_new in na_survey):
             return deed
 
-
-    #Priority 2: village + survey number match
+    # Priority 2: same PDF file
     for deed in lease_deeds:
-        village_match = fuzzy_match(na_village, deed.get("village", ""))
-        survey_new = normalize(deed.get("survey_number_new", ""))
-        survey_old = normalize(deed.get("survey_number_old", ""))
-        survey_match = na_survey and (
-            na_survey in survey_new or
-            na_survey in survey_old or 
-            survey_new in na_survey
-        )
-
-        if village_match and survey_match:
+        if na_file and deed.get("source_file") == na_file:
             return deed
         
     # Priority 3: village match only (weaker)
     for deed in lease_deeds:
-        if fuzzy_match(na_village, deed.get("village", "")):
+        if na_village and fuzzy_match(na_village, deed.get("village", "")):
             return deed
 
     return None
@@ -114,32 +106,42 @@ def build_output_row(
         challans: list[dict], 
         sr_no: int
 )-> dict:
+    na_village = str(na_record.get("village", "")).strip() if na_record else ""
+    lease_village = str(lease_record.get("village", "")).strip() if lease_record else ""
+    final_village = na_village or lease_village
+
+    # If survey number matched, but they yielded different village names,
+    # preferentially choose the English one (ASCII).
+    if na_village and lease_village and na_village != lease_village:
+        if lease_village.isascii() and not na_village.isascii():
+            final_village = lease_village
+        elif na_village.isascii() and not lease_village.isascii():
+            final_village = na_village
+
     row = {
         "Sr.no.": sr_no,
-        "Village": (na_record or lease_record or {}).get("village", ""),
+        "Village ": final_village,
         "Survey No.": "",
         "Area in NA Order": "",
         "Dated": "",
         "NA Order No.": "",
         "Lease Deed Doc. No.": "",
-        "Lease Area": "",
-        "Lease Start": "",
+        "Lease Area ": "",
+        "Lease Start ": "",
     }
 
     if na_record:
-        row["Survey No."]       = na_record.get("survey_number", "")
-        row["Area in NA Order"] = na_record.get("land_area_sqm", "")
-        row["Dated"]            = na_record.get("order_date", "")
-        row["NA Order No."]     = na_record.get("order_number", "")
+        row["Survey No."]       = na_record.get("survey_no", "")
+        row["Area in NA Order"] = na_record.get("area_in_na_order", "")
+        row["Dated"]            = na_record.get("dated", "")
+        row["NA Order No."]     = na_record.get("na_order_no", "")
 
     if lease_record:
-        row["Lease Deed Doc. No."] = lease_record.get("dnr_number", "")
-        row["Lease Area"]          = lease_record.get("land_area_sqm", "")
-        row["Lease Start"]         = lease_record.get("registration_date", "")
+        row["Lease Deed Doc. No."] = lease_record.get("lease_deed_doc_no", "")
+        row["Lease Area "]         = lease_record.get("lease_area", "")
+        row["Lease Start "]        = lease_record.get("lease_start", "")
         # Fallback survey if NA order missing
         if not row["Survey No."]:
-            row["Survey No."] = lease_record.get("survey_number_new", "")
-        if not row["Village"]:
-            row["Village"] = lease_record.get("village", "")
+            row["Survey No."] = lease_record.get("survey_no_new", "")
 
     return row

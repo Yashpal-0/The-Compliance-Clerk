@@ -56,8 +56,7 @@ def detect_doc_type(text: str)->list[str]:
     types = []
 
     if any(k in text_lower for k in ["e-challan", "echallan", "challan", 
-                                      "inspector general of registration",
-                                      "stamp duty", "registration fee"]):
+                                      "traffic violation"]):
         types.append("echallan")
 
     if any(k in text_lower for k in ["lease deed", "lease of immovable", 

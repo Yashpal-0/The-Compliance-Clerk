@@ -46,13 +46,18 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "survey_number": {"type": "string"},
-                    "land_area": {
+                    "survey_no": {"type": "string"},
+                    "village": {"type": "string"},
+                    "na_order_no": {
+                        "type": "string",
+                        "description": "NA Order Number, often starting with iORA/"
+                    },
+                    "area_in_na_order": {
                         "type": "string",
                         "description": "Land area mentioned in the order (e.g., in sq.mt. or acres)"
                     },
                     "owner_name": {"type": "string"},
-                    "order_date": {
+                    "dated": {
                         "type": "string",
                         "description": "Date in DD/MM/YYYY format"
                     },
@@ -61,7 +66,7 @@ TOOLS = [
                         "description": "Name and designation of authority issuing the order"
                     }
                 },
-                "required": ["survey_number", "land_area", "owner_name", "order_date", "authority_details"]
+                "required": ["survey_no", "village", "na_order_no", "area_in_na_order", "owner_name", "dated", "authority_details"]
             }
         }
     },
@@ -100,17 +105,17 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "dnr_number": {
+                    "lease_deed_doc_no": {
                         "type": "string",
                         "description": "e.g. 838/2025"
                     },
-                    "registration_date": {"type": "string"},
-                    "survey_number_new": {"type": "string"},
-                    "survey_number_old": {"type": "string"},
+                    "lease_start": {"type": "string"},
+                    "survey_no_new": {"type": "string"},
+                    "survey_no_old": {"type": "string"},
                     "village": {"type": "string"},
                     "taluka": {"type": "string"},
                     "district": {"type": "string"},
-                    "land_area_sqm": {"type": "string"},
+                    "lease_area": {"type": "string"},
                     "land_area_acres": {"type": "string"},
                     "lessor_name": {"type": "string"},
                     "lessee_name": {"type": "string"},
@@ -121,8 +126,8 @@ TOOLS = [
                     "registration_fee": {"type": "string"},
                     "sub_registrar_office": {"type": "string"}
                 },
-                "required": ["dnr_number", "registration_date", "survey_number_new",
-                             "village", "land_area_sqm", "lessor_name", "lessee_name"]
+                "required": ["lease_deed_doc_no", "lease_start", "survey_no_new",
+                             "village", "lease_area", "lessor_name", "lessee_name"]
             }
         }
     },

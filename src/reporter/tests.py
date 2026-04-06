@@ -5,6 +5,7 @@ from pathlib import Path
 import openpyxl
 
 from src.reporter.reporter import write_excel, write_failed_log
+from src.linker.linker import link_records
 
 class TestReporter(unittest.TestCase):
 
@@ -27,14 +28,12 @@ class TestReporter(unittest.TestCase):
         
         # Verify sheets and headers exist
         wb = openpyxl.load_workbook(output_path)
-        self.assertIn("NA PDF", wb.sheetnames)
-        self.assertIn("eChallan", wb.sheetnames)
-        self.assertIn("Lease Deed", wb.sheetnames)
+        self.assertIn("Sheet1", wb.sheetnames)
         
         # Verify NA PDF empty sheet
-        ws_na = wb["NA PDF"]
+        ws_na = wb["Sheet1"]
         self.assertEqual(ws_na.max_row, 1)
-        self.assertEqual(ws_na.cell(row=1, column=1).value, "Survey Number")
+        self.assertEqual(ws_na.cell(row=1, column=1).value, "Sr.no.")
 
     def test_write_excel_with_data(self):
         output_path = os.path.join(self.output_dir, "data.xlsx")
@@ -42,46 +41,33 @@ class TestReporter(unittest.TestCase):
         rows = [
             {
                 "doc_type": "na_order",
+                "village": "TestVillage",
                 "survey_number": "123",
-                "land_area": "1000",
+                "land_area_sqm": "1000",
                 "source_file": "doc1.pdf"
-            },
-            {
-                "doc_type": "echallan",
-                "challan_number": "CH123",
-                "amount": "500",
-                "source_file": "doc2.pdf"
             },
             {
                 "doc_type": "lease_deed",
                 "dnr_number": "DNR999",
                 "stamp_duty": "10000",
-                "source_file": "doc3.pdf"
+                "source_file": "doc2.pdf"
             }
         ]
         
-        write_excel(rows, output_path)
+        linked_rows = link_records(rows)
+        write_excel(linked_rows, output_path)
         
         self.assertTrue(os.path.exists(output_path))
         
         wb = openpyxl.load_workbook(output_path)
         
-        # Check NA PDF Tab
-        ws_na = wb["NA PDF"]
-        self.assertEqual(ws_na.max_row, 2)
-        self.assertEqual(ws_na.cell(row=2, column=1).value, "123")
-        self.assertEqual(ws_na.cell(row=2, column=2).value, "1000")
+        ws = wb["Sheet1"]
+        self.assertEqual(ws.max_row, 3)
+        self.assertEqual(ws.cell(row=2, column=2).value, "TestVillage")
+        self.assertEqual(ws.cell(row=2, column=3).value, "123")
+        self.assertEqual(ws.cell(row=2, column=4).value, "1000")
         
-        # Check eChallan Tab
-        ws_echallan = wb["eChallan"]
-        self.assertEqual(ws_echallan.max_row, 2)
-        self.assertEqual(ws_echallan.cell(row=2, column=1).value, "CH123")
-        self.assertEqual(ws_echallan.cell(row=2, column=4).value, "500")
-
-        # Check Lease Deed Tab
-        ws_lease = wb["Lease Deed"]
-        self.assertEqual(ws_lease.max_row, 2)
-        self.assertEqual(ws_lease.cell(row=2, column=1).value, "DNR999")
+        self.assertEqual(ws.cell(row=3, column=7).value, "DNR999")
         
     def test_write_failed_log_empty(self):
         # Empty array means no file should be created

@@ -21,10 +21,16 @@ def init_db():
         tool_called TEXT,
         tool_input TEXT,
         raw_response TEXT,
+        prompt_messages TEXT,
         status TEXT DEFAULT 'success',
         error_message TEXT
         )
         """)
+        try:
+            conn.execute("ALTER TABLE extraction_logs ADD COLUMN prompt_messages TEXT")
+        except sqlite3.OperationalError:
+            pass # Ignore if column already exists
+        
         conn.execute("""
         CREATE TABLE IF NOT EXISTS run_summary (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,6 +49,7 @@ def log_extraction(
     tool_called: str,
     tool_input: dict,
     raw_response: dict,
+    prompt_messages: list = None,
     status: str = "success",
     error_message: str = None
 ):
@@ -51,8 +58,8 @@ def log_extraction(
             """
             INSERT INTO extraction_logs 
             (
-            timestamp, source_file, extraction_method, doc_types_detected, tool_called, tool_input, raw_response, status, error_message)
-            VALUES (?,?,?,?,?,?,?,?,?)            
+            timestamp, source_file, extraction_method, doc_types_detected, tool_called, tool_input, raw_response, prompt_messages, status, error_message)
+            VALUES (?,?,?,?,?,?,?,?,?,?)            
             """, (
                 datetime.now(timezone.utc).isoformat(),
                 source_file,
@@ -61,6 +68,7 @@ def log_extraction(
                 tool_called,
                 json.dumps(tool_input),
                 json.dumps(raw_response),
+                json.dumps(prompt_messages) if prompt_messages else None,
                 status,
                 error_message
             )
@@ -74,7 +82,7 @@ def log_run_summary(total: int, successful: int, failed: int, output_file: str):
             (run_timestamp, total_files, successful, failed, output_file)
             VALUES (?, ?, ?, ?, ?)
         """, (
-            datetime.utcnow().isoformat(),
+            datetime.now(timezone.utc).isoformat(),
             total, successful, failed, output_file
         ))
         conn.commit()

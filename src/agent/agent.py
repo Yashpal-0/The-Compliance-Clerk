@@ -101,6 +101,13 @@ Document text (with page breaks marked):
             temperature=0, # deterministic extraction
         )
 
+        # ADD THIS: Print the raw response to see what the API actually returned
+        if not response or not response.choices:
+            print(f"\n[DEBUG] Raw API Response: {response}")
+            print(f"[DEBUG] Response type: {type(response)}")
+            # Raise an exception so you can see the log and let Tenacity retry if you want
+            raise ValueError(f"Malformed Response: {response}")
+
         message=response.choices[0].message
 
         messages.append(message)
@@ -132,7 +139,8 @@ Document text (with page breaks marked):
                     "model": response.model,
                     "iteratioin": iteration,
                     "stop_reason":response.choices[0].finish_reason
-                }
+                },
+                prompt_messages=[m.model_dump() if hasattr(m, 'model_dump') else m for m in messages]
             )
 
             if tool_name == "classify_document":
@@ -187,6 +195,7 @@ Document text (with page breaks marked):
                     tool_called=tool_name,
                     tool_input=tool_input,
                     raw_response={},
+                    prompt_messages=[m.model_dump() if hasattr(m, 'model_dump') else m for m in messages],
                     status="failure",
                     error_message=tool_input.get("reason")
                 )
@@ -230,6 +239,6 @@ def _all_types_extracted(classifications: list, records: list)-> bool:
         if mapped and mapped not in extracted_types:
             return False
 
-    return True 
+    return True
 
 

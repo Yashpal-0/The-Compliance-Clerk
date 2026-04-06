@@ -33,6 +33,8 @@ def process_pdf(pdf_path: str) -> tuple[list, str | None]:
         return records, None
     
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return [], str(e)
     
 
@@ -68,9 +70,12 @@ def main():
         else:
             all_records.extend(records)
     
-    # Write Excel directly from extracted records (no linking needed since separated by sheets)
+    # Link records across PDF files using common identifiers (Village, Survey No)
+    linked_records = link_records(all_records)
+    
+    # Write Excel directly from linked records
     output_file = output_dir / "output.xlsx"
-    write_excel(all_records, str(output_file))
+    write_excel(linked_records, str(output_file))
     write_failed_log(failed, str(output_dir))
     
     # Log run summary
